@@ -1,0 +1,2087 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Système Inventaire 2025 - V3.1 Scan Rack - Build 20251210</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #0f172a;
+            --secondary: #1e293b;
+            --accent: #3b82f6;
+            --accent-bright: #60a5fa;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --background: #020617;
+            --card: #0f172a;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(16, 185, 129, 0.08) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            padding: 2rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--success));
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--text), var(--accent-bright));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle { color: var(--text-muted); font-size: 1.1rem; }
+
+        .connection-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+
+        .status-connected { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+        .status-disconnected { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            background: var(--card);
+            padding: 0.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 1rem;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .tab:hover { background: var(--secondary); color: var(--text); }
+        .tab.active { background: var(--accent); color: var(--text); }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.875rem;
+            background: var(--secondary);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--text);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-bright);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: var(--text);
+        }
+
+        .btn-success:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            color: var(--text);
+            border: 2px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--primary);
+            border-color: var(--accent);
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid var(--success);
+            color: var(--success);
+        }
+
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+        }
+
+        .alert-info {
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid var(--accent);
+            color: var(--accent-bright);
+        }
+
+        .product-info {
+            background: var(--secondary);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 2px solid var(--success);
+            margin-bottom: 2rem;
+        }
+
+        .product-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .info-item label {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .info-item .value {
+            color: var(--text);
+            font-size: 1.25rem;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .scan-steps {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .step {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .step.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--secondary);
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+        .step.active .step-number {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .step.completed .step-number {
+            background: var(--success);
+            border-color: var(--success);
+        }
+
+        .step-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .hidden { display: none !important; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--secondary);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 2px solid var(--border);
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            color: var(--text);
+            font-size: 2rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: var(--secondary);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        tr:hover {
+            background: var(--secondary);
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* ========== RESPONSIVE ========== */
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            h2 {
+                font-size: 1.25rem;
+            }
+
+            h3 {
+                font-size: 1.1rem;
+            }
+
+            .tabs {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .tab {
+                width: 100%;
+                padding: 1rem;
+                font-size: 1rem;
+            }
+
+            .card {
+                padding: 1rem;
+            }
+
+            /* Scanner steps responsive */
+            .step {
+                padding: 1rem;
+            }
+
+            .step-number {
+                width: 30px;
+                height: 30px;
+                font-size: 1rem;
+            }
+
+            .step-title {
+                font-size: 1rem;
+            }
+
+            /* Forms responsive */
+            input, select, button {
+                font-size: 16px !important; /* Prevent zoom on iOS */
+            }
+
+            .btn {
+                padding: 1rem;
+                font-size: 1rem;
+            }
+
+            /* Tables responsive */
+            .table-container {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            table {
+                min-width: 600px;
+                font-size: 0.875rem;
+            }
+
+            th, td {
+                padding: 0.5rem;
+                white-space: nowrap;
+            }
+
+            /* 2ème comptage responsive */
+            #recomptageZone {
+                padding: 1rem;
+            }
+
+            #recomptageLines {
+                font-size: 0.75rem;
+            }
+
+            #recomptageLines th,
+            #recomptageLines td {
+                padding: 0.25rem;
+            }
+
+            /* Rapports responsive */
+            .stats-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            /* Alerts responsive */
+            .alert {
+                padding: 0.75rem;
+                font-size: 0.875rem;
+            }
+
+            /* Product info responsive */
+            #productFound, #lotFound {
+                font-size: 0.875rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 0.5rem;
+            }
+
+            h1 {
+                font-size: 1.25rem;
+            }
+
+            .card {
+                padding: 0.75rem;
+                border-radius: 8px;
+            }
+
+            .step {
+                padding: 0.75rem;
+            }
+
+            .btn {
+                padding: 0.875rem;
+                font-size: 0.875rem;
+            }
+
+            table {
+                font-size: 0.75rem;
+            }
+
+            th, td {
+                padding: 0.375rem;
+            }
+
+            /* Hide less important columns on very small screens */
+            .hide-mobile {
+                display: none;
+            }
+        }
+
+        /* Landscape mobile */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .container {
+                max-width: 100%;
+            }
+
+            .tabs {
+                flex-direction: row;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .tab {
+                width: auto;
+                min-width: 150px;
+                flex-shrink: 0;
+            }
+        }
+
+        /* Tablet */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .container {
+                max-width: 95%;
+                padding: 1.5rem;
+            }
+
+            table {
+                font-size: 0.9rem;
+            }
+
+            .card {
+                padding: 1.5rem;
+            }
+        }
+
+        /* Print styles */
+        @media print {
+            body {
+                background: white;
+                color: black;
+            }
+
+            .tabs, .btn {
+                display: none !important;
+            }
+
+            .card {
+                border: 1px solid #ccc;
+                box-shadow: none;
+            }
+
+            table {
+                break-inside: avoid;
+            }
+        }
+    </style>
+
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📦 Système Inventaire 2025</h1>
+            <p class="subtitle">Gestion multi-lots avec scan double (Produit + Lot)</p>
+            <div class="connection-status status-disconnected" id="connectionStatus">
+                <span>●</span>
+                <span id="statusText">Non connecté</span>
+            </div>
+        </header>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('scanner')">📱 Scanner</button>
+            <button class="tab" onclick="switchTab('deuxieme')">🔄 2ème Comptage</button>
+            <button class="tab" onclick="switchTab('rapports')">📊 Rapports</button>
+        </div>
+
+        <!-- SCANNER -->
+        <div id="scanner" class="tab-content active">
+            <div class="card">
+                <h2 style="margin-bottom: 1.5rem;">Scanner Inventaire</h2>
+                
+                <!-- Infos utilisateur -->
+                <div class="form-group">
+                    <label>Votre Nom</label>
+                    <input type="text" id="personName" placeholder="Ex: Jean Dupont">
+                </div>
+
+                <div id="alertContainer"></div>
+
+                <!-- Étapes de scan -->
+                <div class="scan-steps">
+                    <!-- ÉTAPE 0: Scan Rack -->
+                    <div class="step active" id="step0">
+                        <div class="step-header">
+                            <div class="step-number">1</div>
+                            <div class="step-title">Scanner l'Emplacement Rack</div>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="rackInput" placeholder="Scannez l'emplacement..." autofocus>
+                        </div>
+                    </div>
+
+                    <!-- Rack scanné -->
+                    <div id="rackFound" class="hidden">
+                        <div class="product-info fade-in">
+                            <div class="alert alert-success">
+                                <span>✅</span>
+                                <span><strong>Emplacement : <span id="displayRack" style="font-size: 1.5rem; color: var(--accent-bright);"></span></strong></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ÉTAPE 1: Scan Produit -->
+                    <div class="step" id="step1">
+                        <div class="step-header">
+                            <div class="step-number">2</div>
+                            <div class="step-title">Scanner le Code-Barre Produit</div>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="barcodeInput" placeholder="Scannez le code-barre produit...">
+                        </div>
+                    </div>
+
+                    <!-- Infos Produit Trouvé -->
+                    <div id="productFound" class="hidden">
+                        <div class="product-info fade-in">
+                            <div class="alert alert-success">
+                                <span>✅</span>
+                                <span><strong>Produit trouvé !</strong></span>
+                            </div>
+                            <div class="product-info-grid">
+                                <div class="info-item">
+                                    <label>Code Produit</label>
+                                    <div class="value" id="displayCodeProduit">-</div>
+                                </div>
+                                <div class="info-item">
+                                    <label>Code-Barre</label>
+                                    <div class="value" id="displayCodeBarre">-</div>
+                                </div>
+                                <div class="info-item">
+                                    <label>Colisage</label>
+                                    <div class="value" id="displayColisage">-</div>
+                                </div>
+                                <div class="info-item">
+                                    <label>Prix Achat</label>
+                                    <div class="value" id="displayPrix">-</div>
+                                </div>
+                                <div class="info-item">
+                                    <label>Stock Total</label>
+                                    <div class="value" id="displayStock">-</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ÉTAPE 2: Scan Lot -->
+                    <div class="step" id="step2">
+                        <div class="step-header">
+                            <div class="step-number">3</div>
+                            <div class="step-title">Scanner le Numéro de Lot (optionnel - Entrée pour passer)</div>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="lotInput" placeholder="Scannez le numéro de lot...">
+                        </div>
+                        <div id="lotFound" class="hidden">
+                            <div class="alert alert-info">
+                                <span>📦</span>
+                                <span><strong>Lot enregistré :</strong> <span id="displayLot" class="mono"></span></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ÉTAPE 3: Comptage -->
+                    <div class="step" id="step3">
+                        <div class="step-header">
+                            <div class="step-number">4</div>
+                            <div class="step-title">Comptage des Quantités</div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                            <div class="form-group">
+                                <label>Colis Complets</label>
+                                <input type="number" id="colisComplets" value="0" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Unités Libres</label>
+                                <input type="number" id="unitesLibres" value="0" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Total Unités</label>
+                                <input type="number" id="totalUnites" readonly style="background: var(--primary); font-weight: 700; font-size: 1.5rem;">
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                            <button id="saveBtn" class="btn btn-success" style="flex: 1;" onclick="saveInventory(event)">✅ Enregistrer</button>
+                            <button class="btn btn-secondary" onclick="resetScan()">🔄 Recommencer</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2ÈME COMPTAGE -->
+        <div id="deuxieme" class="tab-content">
+            <div class="card">
+                <h2 style="margin-bottom: 1.5rem;">🔄 2ème Comptage - Produits avec Écarts</h2>
+                
+                <button class="btn btn-primary" onclick="loadEcarts()" style="margin-bottom: 2rem;">🔄 Charger les Écarts</button>
+                
+                <div id="ecartsContainer" style="display: none;">
+                    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); padding: 1rem; border-radius: 8px; margin-bottom: 2rem;">
+                        <strong>⚠️ <span id="ecartsCount">0</span> produits avec écarts détectés</strong>
+                    </div>
+                    
+                    <div style="overflow-x: auto;">
+                        <table id="ecartsTable">
+                            <thead>
+                                <tr>
+                                    <th>Code Produit</th>
+                                    <th>Attendu</th>
+                                    <th>Compté</th>
+                                    <th>Écart</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Zone de recomptage -->
+                <div id="recomptageZone" style="display: none; margin-top: 2rem; padding: 2rem; background: var(--secondary); border-radius: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h3>🔄 Recomptage de : <span id="recompteProduit"></span></h3>
+                        <button class="btn btn-danger" style="width: auto; padding: 0.75rem 1.5rem;" onclick="terminerRecomptage()">
+                            ✅ Terminer le Recomptage
+                        </button>
+                    </div>
+                    
+                    <p style="color: var(--text-muted); margin-bottom: 1rem;">
+                        Stock théorique : <strong id="recompteTheorique"></strong> | 
+                        1er comptage : <strong id="recomptePremier"></strong> | 
+                        Écart : <strong id="recompteEcart" style="color: var(--danger)"></strong>
+                    </p>
+                    
+                    <div style="background: rgba(59, 130, 246, 0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                        <strong>📋 Instructions :</strong> Scannez tous les lots de ce produit. Cliquez sur "Terminer" quand vous avez fini.
+                    </div>
+                    
+                    <!-- Interface de scan comme l'onglet Scanner -->
+                    <div style="background: var(--primary); padding: 1.5rem; border-radius: 12px; margin-bottom: 1rem;">
+                        <label>Emplacement Rack</label>
+                        <select id="recompteRack">
+                            <option value="">-- Sélectionner --</option>
+                        </select>
+                        
+                        <label>Numéro de Lot (optionnel)</label>
+                        <input type="text" id="recompteLot" placeholder="Scanner ou laisser vide">
+                        
+                        <label>Colis Complets</label>
+                        <input type="number" id="recompteColis" value="0" min="0">
+                        
+                        <label>Unités Libres</label>
+                        <input type="number" id="recompteUnites" value="0" min="0">
+                        
+                        <button class="btn btn-success" onclick="ajouterLigneRecomptage()">➕ Ajouter ce Lot</button>
+                    </div>
+                    
+                    <!-- Liste des lignes de recomptage -->
+                    <div style="margin-top: 1.5rem;">
+                        <h4 style="margin-bottom: 1rem;">Lignes de Recomptage :</h4>
+                        <div style="overflow-x: auto;">
+                            <table id="recomptageLines">
+                                <thead>
+                                    <tr>
+                                        <th>Rack</th>
+                                        <th>Lot</th>
+                                        <th>Colis</th>
+                                        <th>Unités</th>
+                                        <th>Total</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                                <tfoot>
+                                    <tr style="font-weight: bold; background: var(--border);">
+                                        <td colspan="4">TOTAL RECOMPTÉ</td>
+                                        <td id="recomptageTotal">0</td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RAPPORTS -->
+        <div id="rapports" class="tab-content">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h2>📊 Rapports & Synthèses</h2>
+                    <div>
+                        <button class="btn btn-success" onclick="exportToExcel()">📥 Exporter Excel Complet</button>
+                        <button class="btn btn-secondary" style="margin-left: 1rem;" onclick="loadReports()">🔄 Actualiser</button>
+                    </div>
+                </div>
+
+                <!-- Stats globales -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Scans Totaux</div>
+                        <div class="stat-value" id="statTotalScans">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Produits Différents</div>
+                        <div class="stat-value" id="statTotalProducts">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Lots Différents</div>
+                        <div class="stat-value" id="statTotalLots">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Quantité Totale</div>
+                        <div class="stat-value" id="statTotalQuantity">-</div>
+                    </div>
+                </div>
+
+                <!-- Synthèse par produit -->
+                <h3 style="margin-bottom: 1rem;">📦 Synthèse par Produit</h3>
+                <div class="table-container">
+                    <table id="productSummaryTable">
+                        <thead>
+                            <tr>
+                                <th>Code Produit</th>
+                                <th>Stock Avant Inventaire</th>
+                                <th>Stock Après Inventaire</th>
+                                <th>Écart</th>
+                                <th>Écart %</th>
+                                <th>Valeur Écart</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <h3 style="margin: 2rem 0 1rem;">🏷️ Détail par Lot</h3>
+                <div class="table-container">
+                    <table id="lotSummaryTable">
+                        <thead>
+                            <tr>
+                                <th>Code Produit</th>
+                                <th>Numéro de Lot</th>
+                                <th>Nb Scans</th>
+                                <th>Quantité Totale</th>
+                                <th>Valeur Totale</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <h3 style="margin: 2rem 0 1rem;">👤 Statistiques par Utilisateur</h3>
+                <div class="table-container">
+                    <table id="userStatsTable">
+                        <thead>
+                            <tr>
+                                <th>Personne</th>
+                                <th>Nb Scans</th>
+                                <th>Produits Différents</th>
+                                <th>Quantité Totale</th>
+                                <th>Valeur Comptée</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <h3 style="margin: 2rem 0 1rem;">📍 Statistiques par Rack</h3>
+                <div class="table-container">
+                    <table id="rackStatsTable">
+                        <thead>
+                            <tr>
+                                <th>Rack</th>
+                                <th>Nb Produits</th>
+                                <th>Quantité Totale</th>
+                                <th>Valeur Totale</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        const API_URL = 'https://script.google.com/macros/s/AKfycbx3EkpFSb1OLle_Yqtc1SgEictPlt4al517p68TL8p53QmrNhOKl5CAQwoGDbzcYxMyNw/exec';
+        let products = [];
+        let inventoryData = [];
+        let emplacements = [];
+        let currentProduct = null;
+        let currentLot = null;
+        let currentRack = null;
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', () => {
+            syncData();
+            
+            // Restaurer le nom depuis localStorage
+            const savedPerson = localStorage.getItem('inventaire_person');
+            if (savedPerson) {
+                document.getElementById('personName').value = savedPerson;
+            }
+            
+            // Sauvegarder le nom à chaque changement
+            document.getElementById('personName').addEventListener('change', (e) => {
+                localStorage.setItem('inventaire_person', e.target.value);
+            });
+
+            // Event listeners
+            document.getElementById('rackInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') searchRack();
+            });
+            
+            document.getElementById('barcodeInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') searchProduct();
+            });
+
+            document.getElementById('lotInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') registerLot();
+            });
+
+            document.getElementById('colisComplets').addEventListener('input', calculateTotal);
+            document.getElementById('unitesLibres').addEventListener('input', calculateTotal);
+        });
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+
+            if (tabName === 'rapports') {
+                // Recharger les données d'inventaire pour les rapports à jour
+                syncData().then(() => loadReports());
+            }
+        }
+
+        function saveConfig() {
+            sheetUrl = document.getElementById('sheetUrl').value.trim();
+            if (!sheetUrl) {
+                showAlert('Veuillez entrer une URL valide', 'danger');
+                return;
+            }
+            localStorage.setItem('sheetUrl', sheetUrl);
+            showAlert('Configuration enregistrée avec succès', 'success');
+            syncData();
+        }
+
+        async function testConnection() {
+            if (!sheetUrl) {
+                showAlert('Veuillez d\'abord enregistrer la configuration', 'danger');
+                return;
+            }
+            try {
+                const response = await fetch(sheetUrl + '?action=getProduits');
+                const data = await response.json();
+                if (data.success) {
+                    updateConnectionStatus(true);
+                    showAlert('✅ Connexion réussie ! ' + data.data.length + ' produits trouvés', 'success');
+                } else {
+                    updateConnectionStatus(false);
+                    showAlert('❌ Erreur: ' + data.error, 'danger');
+                }
+            } catch (error) {
+                updateConnectionStatus(false);
+                showAlert('❌ Erreur: ' + error.message, 'danger');
+            }
+        }
+
+        async function syncData() {
+            try {
+                console.log('🔄 Début synchronisation...');
+                console.log('URL:', API_URL);
+                
+                const [productsRes, emplacementsRes, inventaireRes] = await Promise.all([
+                    fetch(API_URL + '?action=getProduits'),
+                    fetch(API_URL + '?action=getEmplacements'),
+                    fetch(API_URL + '?action=getInventaire')
+                ]);
+
+                console.log('✅ Réponses reçues');
+
+                const productsData = await productsRes.json();
+                const emplacementsData = await emplacementsRes.json();
+                const inventaireResData = await inventaireRes.json();
+
+                console.log('📦 Produits:', productsData);
+                console.log('📍 Emplacements:', emplacementsData);
+                console.log('📋 Inventaire:', inventaireResData);
+
+                if (productsData.success && emplacementsData.success && inventaireResData.success) {
+                    products = productsData.data;
+                    emplacements = emplacementsData.data;
+                    inventoryData = inventaireResData.data;
+                    
+                    console.log('✅ Données chargées:', products.length, 'produits,', emplacements.length, 'emplacements');
+                    
+                    populateRacks();
+                    updateConnectionStatus(true);
+                    showAlert('✅ Système prêt : ' + products.length + ' produits chargés', 'success');
+                } else {
+                    throw new Error('Erreur lors du chargement des données');
+                }
+            } catch (error) {
+                updateConnectionStatus(false);
+                console.error('❌ Erreur sync:', error);
+                showAlert('❌ Erreur de connexion', 'danger');
+            }
+        }
+
+        function updateConnectionStatus(connected) {
+            const status = document.getElementById('connectionStatus');
+            const text = document.getElementById('statusText');
+            if (connected) {
+                status.className = 'connection-status status-connected';
+                text.textContent = 'Connecté';
+            } else {
+                status.className = 'connection-status status-disconnected';
+                text.textContent = 'Non connecté';
+            }
+        }
+
+        function populateRacks() {
+            // Mode scan emplacement - pas besoin de remplir un select
+            console.log('✅ Mode scan emplacement actif (V3.1)');
+        }
+
+
+        function parseNumber(value) {
+            if (typeof value === 'number') return value;
+            if (typeof value === 'string') {
+                return parseFloat(value.replace(/\s/g, '').replace(',', '.')) || 0;
+            }
+            return 0;
+        }
+
+        function searchRack() {
+            const rackCode = document.getElementById('rackInput').value.trim().toUpperCase();
+            
+            if (!rackCode) {
+                showAlert('❌ Scannez un emplacement', 'danger');
+                return;
+            }
+
+            // Accepter directement ce qui est scanné
+            currentRack = rackCode;
+            document.getElementById('displayRack').textContent = rackCode;
+            document.getElementById('rackFound').classList.remove('hidden');
+            document.getElementById('step0').classList.add('completed');
+            
+            moveToStep(1);
+            document.getElementById('barcodeInput').focus();
+        }
+
+        function searchProduct() {
+            const barcode = document.getElementById('barcodeInput').value.trim();
+            if (!barcode) return;
+
+            // Recherche par code-barre ou code produit
+            const product = products.find(p => 
+                String(p.Code_Barre).trim() === barcode || 
+                String(p.Code_Produit).trim() === barcode
+            );
+
+            if (product) {
+                currentProduct = product;
+                displayProduct(product);
+                moveToStep(2);
+                document.getElementById('lotInput').focus();
+            } else {
+                showAlert('❌ Produit non trouvé', 'danger');
+                document.getElementById('barcodeInput').value = '';
+            }
+        }
+
+        function displayProduct(product) {
+            document.getElementById('displayCodeProduit').textContent = product.Code_Produit;
+            document.getElementById('displayCodeBarre').textContent = product.Code_Barre;
+            document.getElementById('displayColisage').textContent = parseNumber(product.Colisage) + ' unités';
+            document.getElementById('displayPrix').textContent = parseNumber(product.Prix_Achat).toFixed(2) + ' €';
+            document.getElementById('displayStock').textContent = parseNumber(product.Stock_Total);
+            
+            document.getElementById('productFound').classList.remove('hidden');
+            document.getElementById('step1').classList.add('completed');
+        }
+
+        function registerLot() {
+            const lot = document.getElementById('lotInput').value.trim();
+            
+            // Si pas de lot, on met "Sans lot" et on continue
+            currentLot = lot || 'Sans lot';
+            
+            if (lot) {
+                document.getElementById('displayLot').textContent = lot;
+                document.getElementById('lotFound').classList.remove('hidden');
+            }
+            
+            document.getElementById('step2').classList.add('completed');
+            
+            moveToStep(3);
+            document.getElementById('colisComplets').focus();
+        }
+
+        function moveToStep(stepNumber) {
+            document.querySelectorAll('.step').forEach(step => {
+                step.classList.remove('active');
+            });
+            document.getElementById('step' + stepNumber).classList.add('active');
+        }
+
+        function calculateTotal() {
+            const colis = parseInt(document.getElementById('colisComplets').value) || 0;
+            const unites = parseInt(document.getElementById('unitesLibres').value) || 0;
+            const colisage = parseNumber(currentProduct.Colisage);
+            const total = (colis * colisage) + unites;
+            document.getElementById('totalUnites').value = total;
+        }
+
+        async function saveInventory() {
+            // Bloquer le bouton
+            const btn = document.getElementById('saveBtn');
+            if (btn.disabled) return;
+            btn.disabled = true;
+            btn.textContent = '⏳ Enregistrement...';
+            
+            const person = document.getElementById('personName').value.trim();
+            const rack = currentRack;
+            const colis = parseInt(document.getElementById('colisComplets').value) || 0;
+            const unites = parseInt(document.getElementById('unitesLibres').value) || 0;
+            const total = parseInt(document.getElementById('totalUnites').value) || 0;
+
+            if (!person || !rack) {
+                showAlert('❌ Veuillez renseigner votre nom et le rack', 'danger');
+                btn.disabled = false;
+                btn.textContent = '✅ Enregistrer';
+                return;
+            }
+
+            if (!currentProduct) {
+                showAlert('❌ Scannez un produit d\'abord', 'danger');
+                btn.disabled = false;
+                btn.textContent = '✅ Enregistrer';
+                return;
+            }
+
+            if (total === 0) {
+                showAlert('❌ La quantité totale ne peut pas être zéro', 'danger');
+                btn.disabled = false;
+                btn.textContent = '✅ Enregistrer';
+                return;
+            }
+
+            const data = {
+                person: person,
+                rack: rack,
+                codeProduit: currentProduct.Code_Produit,
+                codeBarre: currentProduct.Code_Barre,
+                numeroLot: currentLot || 'Sans lot',
+                colisage: parseNumber(currentProduct.Colisage),
+                colisComplets: colis,
+                unitesLibres: unites,
+                prixAchat: parseNumber(currentProduct.Prix_Achat),
+                quantite: total
+            };
+
+            try {
+                // Utiliser GET au lieu de POST pour contourner CORS
+                console.log('🔄 Tentative d\'enregistrement...');
+                console.log('Data:', data);
+                
+                const url = API_URL + '?action=addInventaire&data=' + encodeURIComponent(JSON.stringify(data));
+                const response = await fetch(url);
+
+                console.log('Response status:', response.status);
+                const result = await response.json();
+                console.log('✅ Résultat enregistrement:', result);
+                
+                if (result.success) {
+                    showAlert('✅ ✅ ✅ ENREGISTREMENT RÉUSSI ! ✅ ✅ ✅ Total : ' + total + ' unités', 'success');
+                    
+                    // NE PAS recharger les données (ça efface le rack sélectionné)
+                    // Les données seront rechargées uniquement quand on va dans l'onglet Rapports
+                    
+                    // Reset complet
+                    resetScan();
+                    
+                    // Réactiver le bouton
+                    btn.disabled = false;
+                    btn.textContent = '✅ Enregistrer';
+                    
+                    // Focus sur code-barre
+                    document.getElementById('barcodeInput').focus();
+                } else {
+                    showAlert('❌ Erreur: ' + result.error, 'danger');
+                    btn.disabled = false;
+                    btn.textContent = '✅ Enregistrer';
+                }
+            } catch (error) {
+                console.error('❌ Erreur saveInventory:', error);
+                
+                // Afficher l'erreur complète
+                let errorMsg = 'Erreur d\'enregistrement';
+                if (error.message) errorMsg = error.message;
+                if (typeof error === 'object') errorMsg = JSON.stringify(error);
+                
+                showAlert('❌ Erreur: ' + errorMsg, 'danger');
+                btn.disabled = false;
+                btn.textContent = '✅ Enregistrer';
+            }
+        }
+
+        function resetScan() {
+            // Garder currentRack pour scanner plusieurs produits du même rack
+            currentProduct = null;
+            currentLot = null;
+            document.getElementById('barcodeInput').value = '';
+            document.getElementById('lotInput').value = '';
+            document.getElementById('colisComplets').value = '0';
+            document.getElementById('unitesLibres').value = '0';
+            document.getElementById('totalUnites').value = '0';
+            document.getElementById('productFound').classList.add('hidden');
+            document.getElementById('lotFound').classList.add('hidden');
+            
+            document.querySelectorAll('.step').forEach(step => {
+                step.classList.remove('active', 'completed');
+            });
+            
+            // Si rack déjà scanné, garder step0 completed et aller à step1
+            if (currentRack) {
+                document.getElementById('step0').classList.add('completed');
+                document.getElementById('step1').classList.add('active');
+                document.getElementById('barcodeInput').focus();
+            } else {
+                document.getElementById('step0').classList.add('active');
+                document.getElementById('rackInput').focus();
+            }
+        }
+
+        function showAlert(message, type) {
+            const container = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} fade-in`;
+            alert.innerHTML = `<span>${type === 'success' ? '✅' : '❌'}</span><span>${message}</span>`;
+            container.innerHTML = '';
+            container.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        // ========== 2ÈME COMPTAGE ==========
+        
+        let currentRecompteProduit = null;
+        let currentRecompteProduct = null;
+        let recomptageLines = [];
+        
+        async function loadEcarts() {
+            try {
+                showAlert('🔄 Chargement des écarts...', 'success');
+                
+                // Recharger les données pour avoir l'inventaire à jour
+                await syncData();
+                
+                // Calculer les écarts
+                const productMap = {};
+                
+                inventoryData.forEach(item => {
+                    const code = item.Code_Produit;
+                    if (!productMap[code]) {
+                        productMap[code] = {
+                            code: code,
+                            counted: 0
+                        };
+                    }
+                    productMap[code].counted += parseNumber(item.Quantite_Totale);
+                });
+                
+                const ecarts = [];
+                Object.values(productMap).forEach(item => {
+                    const product = products.find(p => p.Code_Produit === item.code);
+                    if (product) {
+                        const stockTheorique = parseNumber(product.Stock_Total);
+                        const ecart = item.counted - stockTheorique;
+                        
+                        // Si écart (positif ou négatif)
+                        if (ecart !== 0) {
+                            ecarts.push({
+                                code: item.code,
+                                theorique: stockTheorique,
+                                counted: item.counted,
+                                ecart: ecart
+                            });
+                        }
+                    }
+                });
+                
+                // Afficher les écarts
+                document.getElementById('ecartsCount').textContent = ecarts.length;
+                document.getElementById('ecartsContainer').style.display = 'block';
+                
+                const tbody = document.querySelector('#ecartsTable tbody');
+                tbody.innerHTML = '';
+                
+                ecarts.forEach(item => {
+                    const row = tbody.insertRow();
+                    const ecartColor = item.ecart >= 0 ? 'var(--success)' : 'var(--danger)';
+                    row.innerHTML = `
+                        <td class="mono">${item.code}</td>
+                        <td>${item.theorique.toLocaleString('fr-FR')}</td>
+                        <td>${item.counted.toLocaleString('fr-FR')}</td>
+                        <td style="color: ${ecartColor}; font-weight: bold;">
+                            ${item.ecart >= 0 ? '+' : ''}${item.ecart.toLocaleString('fr-FR')}
+                        </td>
+                        <td>
+                            <button class="btn btn-primary" style="padding: 0.5rem 1rem; width: auto;" 
+                                onclick="startRecomptage('${item.code}', ${item.theorique}, ${item.counted}, ${item.ecart})">
+                                🔄 Recompter
+                            </button>
+                        </td>
+                    `;
+                });
+                
+                showAlert(`✅ ${ecarts.length} produits avec écarts détectés`, 'success');
+            } catch (error) {
+                showAlert('❌ Erreur lors du chargement des écarts', 'danger');
+                console.error(error);
+            }
+        }
+        
+        function startRecomptage(code, theorique, premier, ecart) {
+            currentRecompteProduit = code;
+            currentRecompteProduct = products.find(p => p.Code_Produit == code);
+            recomptageLines = [];
+            
+            if (!currentRecompteProduct) {
+                showAlert('❌ Produit non trouvé', 'danger');
+                return;
+            }
+            
+            document.getElementById('recompteProduit').textContent = code;
+            document.getElementById('recompteTheorique').textContent = theorique.toLocaleString('fr-FR');
+            document.getElementById('recomptePremier').textContent = premier.toLocaleString('fr-FR');
+            
+            const ecartColor = ecart >= 0 ? 'var(--success)' : 'var(--danger)';
+            document.getElementById('recompteEcart').innerHTML = 
+                `<span style="color: ${ecartColor}">${ecart >= 0 ? '+' : ''}${ecart.toLocaleString('fr-FR')}</span>`;
+            
+            // Remplir le select des racks
+            const select = document.getElementById('recompteRack');
+            select.innerHTML = '<option value="">-- Sélectionner --</option>';
+            emplacements.forEach(rack => {
+                const option = document.createElement('option');
+                option.value = rack;
+                option.textContent = rack;
+                select.appendChild(option);
+            });
+            
+            // Reset les champs
+            document.getElementById('recompteLot').value = '';
+            document.getElementById('recompteColis').value = '0';
+            document.getElementById('recompteUnites').value = '0';
+            
+            // Vider le tableau
+            document.querySelector('#recomptageLines tbody').innerHTML = '';
+            document.getElementById('recomptageTotal').textContent = '0';
+            
+            document.getElementById('recomptageZone').style.display = 'block';
+            document.getElementById('recompteRack').focus();
+        }
+        
+        function ajouterLigneRecomptage() {
+            const rack = document.getElementById('recompteRack').value;
+            const lot = document.getElementById('recompteLot').value.trim() || 'Sans lot';
+            const colis = parseInt(document.getElementById('recompteColis').value) || 0;
+            const unites = parseInt(document.getElementById('recompteUnites').value) || 0;
+            
+            if (!rack) {
+                showAlert('❌ Sélectionnez un rack', 'danger');
+                return;
+            }
+            
+            const colisage = parseNumber(currentRecompteProduct.Colisage);
+            const total = (colis * colisage) + unites;
+            
+            if (total === 0) {
+                showAlert('❌ La quantité ne peut pas être zéro', 'danger');
+                return;
+            }
+            
+            // Ajouter la ligne
+            recomptageLines.push({
+                rack: rack,
+                lot: lot,
+                colis: colis,
+                unites: unites,
+                colisage: colisage,
+                total: total
+            });
+            
+            // Afficher dans le tableau
+            const tbody = document.querySelector('#recomptageLines tbody');
+            const row = tbody.insertRow();
+            row.innerHTML = `
+                <td>${rack}</td>
+                <td>${lot}</td>
+                <td>${colis}</td>
+                <td>${unites}</td>
+                <td>${total}</td>
+                <td>
+                    <button class="btn btn-danger" style="padding: 0.5rem 1rem; width: auto;" 
+                        onclick="supprimerLigneRecomptage(${recomptageLines.length - 1})">
+                        🗑️
+                    </button>
+                </td>
+            `;
+            
+            // Mettre à jour le total
+            const totalRecompte = recomptageLines.reduce((sum, line) => sum + line.total, 0);
+            document.getElementById('recomptageTotal').textContent = totalRecompte.toLocaleString('fr-FR');
+            
+            // Reset les champs
+            document.getElementById('recompteLot').value = '';
+            document.getElementById('recompteColis').value = '0';
+            document.getElementById('recompteUnites').value = '0';
+            document.getElementById('recompteRack').focus();
+            
+            showAlert('✅ Ligne ajoutée', 'success');
+        }
+        
+        function supprimerLigneRecomptage(index) {
+            recomptageLines.splice(index, 1);
+            
+            // Réafficher le tableau
+            const tbody = document.querySelector('#recomptageLines tbody');
+            tbody.innerHTML = '';
+            
+            recomptageLines.forEach((line, i) => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${line.rack}</td>
+                    <td>${line.lot}</td>
+                    <td>${line.colis}</td>
+                    <td>${line.unites}</td>
+                    <td>${line.total}</td>
+                    <td>
+                        <button class="btn btn-danger" style="padding: 0.5rem 1rem; width: auto;" 
+                            onclick="supprimerLigneRecomptage(${i})">
+                            🗑️
+                        </button>
+                    </td>
+                `;
+            });
+            
+            // Mettre à jour le total
+            const totalRecompte = recomptageLines.reduce((sum, line) => sum + line.total, 0);
+            document.getElementById('recomptageTotal').textContent = totalRecompte.toLocaleString('fr-FR');
+        }
+        
+        async function terminerRecomptage() {
+            if (recomptageLines.length === 0) {
+                showAlert('❌ Ajoutez au moins une ligne de recomptage', 'danger');
+                return;
+            }
+            
+            const person = localStorage.getItem('inventaire_person') || 'Recomptage';
+            
+            try {
+                showAlert('🔄 Enregistrement du recomptage...', 'success');
+                
+                // Enregistrer toutes les lignes
+                for (const line of recomptageLines) {
+                    const data = {
+                        person: person + ' (2ème comptage)',
+                        rack: line.rack,
+                        codeProduit: currentRecompteProduct.Code_Produit,
+                        codeBarre: currentRecompteProduct.Code_Barre,
+                        numeroLot: 'Recomptage-' + line.lot,
+                        colisage: line.colisage,
+                        colisComplets: line.colis,
+                        unitesLibres: line.unites,
+                        prixAchat: parseNumber(currentRecompteProduct.Prix_Achat),
+                        quantite: line.total
+                    };
+                    
+                    const url = API_URL + '?action=addInventaire&data=' + encodeURIComponent(JSON.stringify(data));
+                    const response = await fetch(url);
+                    const result = await response.json();
+                    
+                    if (!result.success) {
+                        throw new Error('Erreur lors de l\'enregistrement');
+                    }
+                }
+                
+                showAlert('✅ Recomptage terminé avec succès !', 'success');
+                document.getElementById('recomptageZone').style.display = 'none';
+                currentRecompteProduit = null;
+                currentRecompteProduct = null;
+                recomptageLines = [];
+                
+                // Recharger les écarts
+                await loadEcarts();
+            } catch (error) {
+                console.error('Erreur:', error);
+                showAlert('❌ Erreur lors de l\'enregistrement', 'danger');
+            }
+        }
+
+        // ========== RAPPORTS ==========
+
+        function loadReports() {
+            if (inventoryData.length === 0) {
+                showAlert('Aucune donnée d\'inventaire disponible', 'info');
+                return;
+            }
+
+            // Stats globales
+            const totalScans = inventoryData.length;
+            const uniqueProducts = new Set(inventoryData.map(i => i.Code_Produit)).size;
+            const uniqueLots = new Set(inventoryData.map(i => i.Numero_Lot)).size;
+            const totalQuantity = inventoryData.reduce((sum, i) => sum + parseNumber(i.Quantite_Totale), 0);
+
+            document.getElementById('statTotalScans').textContent = totalScans;
+            document.getElementById('statTotalProducts').textContent = uniqueProducts;
+            document.getElementById('statTotalLots').textContent = uniqueLots;
+            document.getElementById('statTotalQuantity').textContent = totalQuantity.toLocaleString('fr-FR');
+
+            // Synthèse par produit
+            generateProductSummary();
+            generateLotSummary();
+            generateUserStats();
+            generateRackStats();
+        }
+
+        function generateProductSummary() {
+            const tbody = document.getElementById('productSummaryTable').querySelector('tbody');
+            tbody.innerHTML = '';
+
+            const productMap = {};
+            inventoryData.forEach(item => {
+                const code = item.Code_Produit;
+                if (!productMap[code]) {
+                    productMap[code] = {
+                        code: code,
+                        counted: 0,
+                        price: parseNumber(item.Prix_Achat)
+                    };
+                }
+                productMap[code].counted += parseNumber(item.Quantite_Totale);
+            });
+
+            Object.values(productMap).forEach(item => {
+                const product = products.find(p => p.Code_Produit == item.code);
+                const stockAvant = product ? parseNumber(product.Stock_Total) : 0;
+                const stockApres = item.counted;
+                const ecart = stockApres - stockAvant;
+                const ecartPct = stockAvant > 0 ? ((ecart / stockAvant) * 100) : 0;
+                const valeurEcart = ecart * item.price;
+
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td class="mono">${item.code}</td>
+                    <td>${stockAvant.toLocaleString('fr-FR')}</td>
+                    <td>${stockApres.toLocaleString('fr-FR')}</td>
+                    <td style="color: ${ecart >= 0 ? 'var(--success)' : 'var(--danger)'}">${ecart >= 0 ? '+' : ''}${ecart.toLocaleString('fr-FR')}</td>
+                    <td style="color: ${ecart >= 0 ? 'var(--success)' : 'var(--danger)'}">${ecartPct.toFixed(1)}%</td>
+                    <td style="color: ${valeurEcart >= 0 ? 'var(--success)' : 'var(--danger)'}">${valeurEcart >= 0 ? '+' : ''}${valeurEcart.toFixed(2)} €</td>
+                `;
+            });
+        }
+
+        function generateLotSummary() {
+            const tbody = document.getElementById('lotSummaryTable').querySelector('tbody');
+            tbody.innerHTML = '';
+
+            const lotMap = {};
+            inventoryData.forEach(item => {
+                const key = item.Code_Produit + '|' + item.Numero_Lot;
+                if (!lotMap[key]) {
+                    lotMap[key] = {
+                        code: item.Code_Produit,
+                        lot: item.Numero_Lot,
+                        scans: 0,
+                        quantity: 0,
+                        price: parseNumber(item.Prix_Achat)
+                    };
+                }
+                lotMap[key].scans++;
+                lotMap[key].quantity += parseNumber(item.Quantite_Totale);
+            });
+
+            Object.values(lotMap).forEach(item => {
+                const valeur = item.quantity * item.price;
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td class="mono">${item.code}</td>
+                    <td class="mono">${item.lot}</td>
+                    <td>${item.scans}</td>
+                    <td>${item.quantity.toLocaleString('fr-FR')}</td>
+                    <td>${valeur.toFixed(2)} €</td>
+                `;
+            });
+        }
+
+        function generateUserStats() {
+            const tbody = document.getElementById('userStatsTable').querySelector('tbody');
+            tbody.innerHTML = '';
+
+            const userMap = {};
+            inventoryData.forEach(item => {
+                const user = item.Personne;
+                if (!userMap[user]) {
+                    userMap[user] = {
+                        scans: 0,
+                        products: new Set(),
+                        quantity: 0,
+                        value: 0
+                    };
+                }
+                userMap[user].scans++;
+                userMap[user].products.add(item.Code_Produit);
+                userMap[user].quantity += parseNumber(item.Quantite_Totale);
+                userMap[user].value += parseNumber(item.Quantite_Totale) * parseNumber(item.Prix_Achat);
+            });
+
+            Object.entries(userMap).forEach(([user, stats]) => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td><strong>${user}</strong></td>
+                    <td>${stats.scans}</td>
+                    <td>${stats.products.size}</td>
+                    <td>${stats.quantity.toLocaleString('fr-FR')}</td>
+                    <td>${stats.value.toFixed(2)} €</td>
+                `;
+            });
+        }
+
+        function generateRackStats() {
+            const tbody = document.getElementById('rackStatsTable').querySelector('tbody');
+            tbody.innerHTML = '';
+
+            const rackMap = {};
+            inventoryData.forEach(item => {
+                const rack = item.Rack;
+                if (!rackMap[rack]) {
+                    rackMap[rack] = {
+                        products: new Set(),
+                        quantity: 0,
+                        value: 0
+                    };
+                }
+                rackMap[rack].products.add(item.Code_Produit);
+                rackMap[rack].quantity += parseNumber(item.Quantite_Totale);
+                rackMap[rack].value += parseNumber(item.Quantite_Totale) * parseNumber(item.Prix_Achat);
+            });
+
+            Object.entries(rackMap).forEach(([rack, stats]) => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td class="mono"><strong>${rack}</strong></td>
+                    <td>${stats.products.size}</td>
+                    <td>${stats.quantity.toLocaleString('fr-FR')}</td>
+                    <td>${stats.value.toFixed(2)} €</td>
+                `;
+            });
+        }
+
+        // ========== EXPORT EXCEL ==========
+
+        async function exportToExcel() {
+            if (inventoryData.length === 0) {
+                showAlert('Aucune donnée à exporter', 'danger');
+                return;
+            }
+
+            showAlert('🔄 Génération de l\'Excel stylé...', 'success');
+
+            const workbook = new ExcelJS.Workbook();
+            workbook.creator = 'Système Inventaire 2025';
+            workbook.created = new Date();
+
+            // STYLES COMMUNS
+            const headerStyle = {
+                font: { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 },
+                fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3B82F6' } },
+                alignment: { horizontal: 'center', vertical: 'middle' },
+                border: {
+                    top: { style: 'thin', color: { argb: 'FF1E293B' } },
+                    bottom: { style: 'thin', color: { argb: 'FF1E293B' } },
+                    left: { style: 'thin', color: { argb: 'FF1E293B' } },
+                    right: { style: 'thin', color: { argb: 'FF1E293B' } }
+                }
+            };
+
+            // ========== 1. SYNTHÈSE PAR PRODUIT ==========
+            const ws1 = workbook.addWorksheet('Synthèse Produits', {
+                views: [{ state: 'frozen', xSplit: 0, ySplit: 1 }]
+            });
+
+            ws1.columns = [
+                { header: 'Code Produit', key: 'code', width: 15 },
+                { header: 'Stock Avant', key: 'avant', width: 15 },
+                { header: 'Stock Après', key: 'apres', width: 15 },
+                { header: 'Écart Qté', key: 'ecart', width: 12 },
+                { header: 'Écart %', key: 'pct', width: 12 },
+                { header: 'Valeur Avant', key: 'valAvant', width: 15 },
+                { header: 'Valeur Après', key: 'valApres', width: 15 },
+                { header: 'Valeur Écart', key: 'valEcart', width: 15 }
+            ];
+
+            // Style header
+            ws1.getRow(1).eachCell(cell => { Object.assign(cell, headerStyle); });
+            ws1.getRow(1).height = 25;
+
+            // Data
+            const productSummary = generateProductSummaryData();
+            productSummary.forEach((item, idx) => {
+                const valeurAvant = item.Stock_Avant_Inventaire * item.Prix;
+                const valeurApres = item.Stock_Apres_Inventaire * item.Prix;
+                const valeurEcart = valeurApres - valeurAvant;
+                
+                const row = ws1.addRow({
+                    code: item.Code_Produit,
+                    avant: item.Stock_Avant_Inventaire,
+                    apres: item.Stock_Apres_Inventaire,
+                    ecart: item.Ecart,
+                    pct: item['Ecart_%'],
+                    valAvant: valeurAvant,
+                    valApres: valeurApres,
+                    valEcart: valeurEcart
+                });
+
+                // Zebra striping
+                if (idx % 2 === 0) {
+                    row.eachCell(cell => {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+                    });
+                }
+
+                // Couleurs conditionnelles pour écart
+                const ecartCell = row.getCell('ecart');
+                const pctCell = row.getCell('pct');
+                const valEcartCell = row.getCell('valEcart');
+
+                if (item.Ecart > 0) {
+                    [ecartCell, pctCell, valEcartCell].forEach(cell => {
+                        cell.font = { color: { argb: 'FF10B981' }, bold: true };
+                    });
+                } else if (item.Ecart < 0) {
+                    [ecartCell, pctCell, valEcartCell].forEach(cell => {
+                        cell.font = { color: { argb: 'FFEF4444' }, bold: true };
+                    });
+                }
+
+                // Formats
+                row.getCell('pct').numFmt = '0.00"%"';
+                row.getCell('valAvant').numFmt = '#,##0.00 "€"';
+                row.getCell('valApres').numFmt = '#,##0.00 "€"';
+                row.getCell('valEcart').numFmt = '#,##0.00 "€"';
+            });
+
+            // ========== 2. DÉTAIL PAR LOT ==========
+            const ws2 = workbook.addWorksheet('Détail Lots', {
+                views: [{ state: 'frozen', xSplit: 0, ySplit: 1 }]
+            });
+
+            ws2.columns = [
+                { header: 'Code Produit', key: 'code', width: 15 },
+                { header: 'N° Lot', key: 'lot', width: 20 },
+                { header: 'Nb Scans', key: 'scans', width: 12 },
+                { header: 'Quantité', key: 'qte', width: 15 },
+                { header: 'Valeur', key: 'valeur', width: 15 }
+            ];
+
+            ws2.getRow(1).eachCell(cell => { Object.assign(cell, headerStyle); });
+            ws2.getRow(1).height = 25;
+
+            const lotSummary = generateLotSummaryData();
+            lotSummary.forEach((item, idx) => {
+                const row = ws2.addRow({
+                    code: item.Code_Produit,
+                    lot: item.Numero_Lot,
+                    scans: item.Nb_Scans,
+                    qte: item.Quantite_Totale,
+                    valeur: item.Valeur_Totale
+                });
+
+                if (idx % 2 === 0) {
+                    row.eachCell(cell => {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+                    });
+                }
+
+                row.getCell('valeur').numFmt = '#,##0.00 "€"';
+            });
+
+            // ========== 3. STATS UTILISATEURS ==========
+            const ws3 = workbook.addWorksheet('Stats Utilisateurs', {
+                views: [{ state: 'frozen', xSplit: 0, ySplit: 1 }]
+            });
+
+            ws3.columns = [
+                { header: 'Personne', key: 'person', width: 20 },
+                { header: 'Nb Scans', key: 'scans', width: 12 },
+                { header: 'Produits', key: 'produits', width: 12 },
+                { header: 'Quantité Totale', key: 'qte', width: 15 }
+            ];
+
+            ws3.getRow(1).eachCell(cell => { Object.assign(cell, headerStyle); });
+            ws3.getRow(1).height = 25;
+
+            const userStats = generateUserStatsData();
+            userStats.forEach((item, idx) => {
+                const row = ws3.addRow({
+                    person: item.Personne,
+                    scans: item.Nb_Scans,
+                    produits: item.Produits_Differents,
+                    qte: item.Quantite_Totale
+                });
+
+                if (idx % 2 === 0) {
+                    row.eachCell(cell => {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+                    });
+                }
+            });
+
+            // ========== 4. STATS RACKS ==========
+            const ws4 = workbook.addWorksheet('Stats Racks', {
+                views: [{ state: 'frozen', xSplit: 0, ySplit: 1 }]
+            });
+
+            ws4.columns = [
+                { header: 'Rack', key: 'rack', width: 15 },
+                { header: 'Nb Scans', key: 'scans', width: 12 },
+                { header: 'Produits', key: 'produits', width: 12 },
+                { header: 'Quantité', key: 'qte', width: 15 },
+                { header: 'Valeur', key: 'valeur', width: 15 }
+            ];
+
+            ws4.getRow(1).eachCell(cell => { Object.assign(cell, headerStyle); });
+            ws4.getRow(1).height = 25;
+
+            const rackStats = generateRackStatsData();
+            rackStats.forEach((item, idx) => {
+                const row = ws4.addRow({
+                    rack: item.Rack,
+                    scans: item.Nb_Scans,
+                    produits: item.Produits_Differents,
+                    qte: item.Quantite_Totale,
+                    valeur: item.Valeur_Totale
+                });
+
+                if (idx % 2 === 0) {
+                    row.eachCell(cell => {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+                    });
+                }
+
+                row.getCell('valeur').numFmt = '#,##0.00 "€"';
+            });
+
+            // ========== 5. INVENTAIRE COMPLET ==========
+            const ws5 = workbook.addWorksheet('Inventaire Complet', {
+                views: [{ state: 'frozen', xSplit: 0, ySplit: 1 }]
+            });
+
+            ws5.columns = [
+                { header: 'Date', key: 'date', width: 20 },
+                { header: 'Personne', key: 'person', width: 20 },
+                { header: 'Rack', key: 'rack', width: 12 },
+                { header: 'Code Produit', key: 'code', width: 15 },
+                { header: 'Code Barre', key: 'barre', width: 15 },
+                { header: 'N° Lot', key: 'lot', width: 20 },
+                { header: 'Colisage', key: 'colisage', width: 12 },
+                { header: 'Colis', key: 'colis', width: 10 },
+                { header: 'Unités', key: 'unites', width: 10 },
+                { header: 'Quantité', key: 'qte', width: 12 },
+                { header: 'Prix', key: 'prix', width: 12 },
+                { header: 'Valeur', key: 'valeur', width: 15 }
+            ];
+
+            ws5.getRow(1).eachCell(cell => { Object.assign(cell, headerStyle); });
+            ws5.getRow(1).height = 25;
+
+            inventoryData.forEach((item, idx) => {
+                const valeur = parseNumber(item.Quantite_Totale) * parseNumber(item.Prix_Achat);
+                const row = ws5.addRow({
+                    date: item.Timestamp,
+                    person: item.Personne,
+                    rack: item.Rack,
+                    code: item.Code_Produit,
+                    barre: item.Code_Barre,
+                    lot: item.Numero_Lot,
+                    colisage: parseNumber(item.Colisage),
+                    colis: parseNumber(item.Colis_Complets),
+                    unites: parseNumber(item.Unites_Libres),
+                    qte: parseNumber(item.Quantite_Totale),
+                    prix: parseNumber(item.Prix_Achat),
+                    valeur: valeur
+                });
+
+                if (idx % 2 === 0) {
+                    row.eachCell(cell => {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+                    });
+                }
+
+                row.getCell('prix').numFmt = '#,##0.00 "€"';
+                row.getCell('valeur').numFmt = '#,##0.00 "€"';
+            });
+
+            // GÉNÉRER LE FICHIER
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const date = new Date().toISOString().split('T')[0];
+            a.download = `Inventaire_Synthese_${date}.xlsx`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+            
+            showAlert('✅ Export Excel stylé réussi ! 🎨', 'success');
+        }
+
+        function generateProductSummaryData() {
+            const productMap = {};
+            inventoryData.forEach(item => {
+                const code = item.Code_Produit;
+                if (!productMap[code]) {
+                    productMap[code] = {
+                        counted: 0,
+                        price: parseNumber(item.Prix_Achat)
+                    };
+                }
+                productMap[code].counted += parseNumber(item.Quantite_Totale);
+            });
+
+            return Object.entries(productMap).map(([code, data]) => {
+                const product = products.find(p => p.Code_Produit == code);
+                const stockAvant = product ? parseNumber(product.Stock_Total) : 0;
+                const stockApres = data.counted;
+                const ecart = stockApres - stockAvant;
+                const ecartPct = stockAvant > 0 ? ((ecart / stockAvant) * 100) : 0;
+                const valeurEcart = ecart * data.price;
+
+                return {
+                    'Code_Produit': code,
+                    'Stock_Avant_Inventaire': stockAvant,
+                    'Stock_Apres_Inventaire': stockApres,
+                    'Ecart': ecart,
+                    'Ecart_%': parseFloat(ecartPct.toFixed(2)),
+                    'Valeur_Ecart': parseFloat(valeurEcart.toFixed(2)),
+                    'Prix': data.price
+                };
+            });
+        }
+
+        function generateLotSummaryData() {
+            const lotMap = {};
+            inventoryData.forEach(item => {
+                const key = item.Code_Produit + '|' + item.Numero_Lot;
+                if (!lotMap[key]) {
+                    lotMap[key] = {
+                        code: item.Code_Produit,
+                        lot: item.Numero_Lot,
+                        scans: 0,
+                        quantity: 0,
+                        price: parseNumber(item.Prix_Achat)
+                    };
+                }
+                lotMap[key].scans++;
+                lotMap[key].quantity += parseNumber(item.Quantite_Totale);
+            });
+
+            return Object.values(lotMap).map(item => ({
+                'Code_Produit': item.code,
+                'Numero_Lot': item.lot,
+                'Nb_Scans': item.scans,
+                'Quantite_Totale': item.quantity,
+                'Valeur_Totale': parseFloat((item.quantity * item.price).toFixed(2))
+            }));
+        }
+
+        function generateUserStatsData() {
+            const userMap = {};
+            inventoryData.forEach(item => {
+                const user = item.Personne;
+                if (!userMap[user]) {
+                    userMap[user] = {
+                        scans: 0,
+                        products: new Set(),
+                        quantity: 0,
+                        value: 0
+                    };
+                }
+                userMap[user].scans++;
+                userMap[user].products.add(item.Code_Produit);
+                userMap[user].quantity += parseNumber(item.Quantite_Totale);
+                userMap[user].value += parseNumber(item.Quantite_Totale) * parseNumber(item.Prix_Achat);
+            });
+
+            return Object.entries(userMap).map(([user, stats]) => ({
+                'Personne': user,
+                'Nb_Scans': stats.scans,
+                'Produits_Differents': stats.products.size,
+                'Quantite_Totale': stats.quantity,
+                'Valeur_Comptee': parseFloat(stats.value.toFixed(2))
+            }));
+        }
+
+        function generateRackStatsData() {
+            const rackMap = {};
+            inventoryData.forEach(item => {
+                const rack = item.Rack;
+                if (!rackMap[rack]) {
+                    rackMap[rack] = {
+                        products: new Set(),
+                        quantity: 0,
+                        value: 0
+                    };
+                }
+                rackMap[rack].products.add(item.Code_Produit);
+                rackMap[rack].quantity += parseNumber(item.Quantite_Totale);
+                rackMap[rack].value += parseNumber(item.Quantite_Totale) * parseNumber(item.Prix_Achat);
+            });
+
+            return Object.entries(rackMap).map(([rack, stats]) => ({
+                'Rack': rack,
+                'Nb_Produits': stats.products.size,
+                'Quantite_Totale': stats.quantity,
+                'Valeur_Totale': parseFloat(stats.value.toFixed(2))
+            }));
+        }
+    </script>
+</body>
+</html>
